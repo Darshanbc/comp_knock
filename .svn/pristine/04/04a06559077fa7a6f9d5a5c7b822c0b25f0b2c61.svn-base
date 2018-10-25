@@ -1,0 +1,9 @@
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages will be REMOVED:
+  checkbox-converged checkbox-gui network-manager network-manager-gnome
+  plainbox-provider-checkbox plainbox-provider-resource-generic ubuntu-desktop
+0 upgraded, 0 newly installed, 7 to remove and 5 not upgraded.
+After this operation, 15.3 MB disk space will be freed.
+Do you want to continue? [Y/n] 

@@ -1,0 +1,114 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import cv2
+import matplotlib.pyplot as plt
+from PIL import Image
+import os
+from thread import start_new_thread as newthread
+import time
+import analyse
+import cryptoOps
+import dbops
+Disconnected_msg="*Camera not Connected"
+camName="e-con's 8MP Camera: e-con's 8MP"
+DMC ='H78HSR5JNNQSUIY'
+lineNo=12
+stationNo=3
+PCBA_family="103.78.7782"
+imageInsertOp="insert_image"
+
+imName=""
+anImgName=""
+# cam=""
+        
+
+
+def statusUpdate():
+    status,devNum,devName=getCam(camName) 
+    if status:
+        return devName
+    else:
+       
+        return Disconnected_msg
+
+
+def init():
+    global x
+    print("executing init")
+    x=True
+    global cam,Disconnected_msg
+    isConnected,devNum,devName=getCam(camName)
+    print str(isConnected)
+    if isConnected:
+        cam=cv2.VideoCapture(int(devNum))
+        newthread(continuos_cap,())
+        return devName
+    else:
+        # print Disconnected_msg
+        return Disconnected_msg
+
+def continuos_cap():
+ # ----------------------------
+    # y=True
+    global curFrame
+    # global imName,anImgName
+# -----------------------------------
+    while True:
+        curFrame=cam.read()
+
+            
+def captureAnalyse(user):
+    frameData=curFrame
+    dbobj1=dbops.dbConn()
+    dbobj1.operation(imageInsertOp)
+
+    key=str(dbobj1.query({'empid':"admin"},{"key":1})['key'])
+
+    if frameData[0]:
+        newframe=frameData[1]
+        imName=str(int(time.time()*1000))
+        cv2.imwrite(os.path.join(os.getcwd(),'static/images',imName+".png"),newframe)
+        imPath="./images/"+imName+".png"
+        anImgPath=None
+        # encrypt image
+        encryptobj=cryptoOps.CryptoOps()
+        cipher_text=encryptobj.encrypt(newframe,key)
+
+        # insert image
+        dbObj=dbops.dbConn()
+        dbObj.operation('insert_image')
+        attr={}
+
+        attr['image']=cipher_text
+        attr['user']=user
+        attr['DMC']=DMC
+        attr['PCBA family']=PCBA_family
+        if user!='admin':
+
+            attr['line No.']=lineNo
+            attr['station']=stationNo
+
+            anImgMatrix=analyse.Analyse(PCBA_family,newframe)
+            anImgName= str(int(time.time() * 1000))
+            cv2.imwrite(os.path.join(os.getcwd(),'static/images',anImgName+".png"),anImgMatrix)
+            cipher_text = encryptobj.encrypt(anImgMatrix, key)
+            attr["analysedImage"]=cipher_text
+            dbObj.insert(attr)
+
+        elif user=='admin':
+            # attr['PCBA family']=PCBA_family
+            dbObj.insert(attr)
+
+        return frameData[0],imPath,anImgPath    # return True,"./test.png"
+    else:
+            return frameData[0], None,None
+
+def getCam(camName):
+    devList=os.listdir('/sys/class/video4linux/')
+    for dev in devList:
+        f=open(os.path.join('/sys/class/video4linux',dev,'name'),'r')
+        newCam=f.read()
+        if newCam.find(camName)!=-1:
+            return True, int(filter(str.isdigit,dev)),camName
+    return False ,None, None

@@ -1,0 +1,53 @@
+import pymongo
+import base64
+import bson
+from bson.binary import Binary 
+from urlparse import urlparse
+import hashlib
+
+
+class dbConn:
+
+	dbname="testdb"
+	def operation(self,operation):
+		self.operation=operation
+		if operation=='signup' or 'login':
+			self.collection="users"	
+		elif operation=="insert_image":
+			self.collection="fileCollections"
+
+	def establishConnection(self):
+	# establish a connection to the database
+		uri="mongodb://admin:admin@127.0.0.1:27017"
+		try:
+			client = pymongo.MongoClient(uri)
+			print("succesfully connected")
+		except:
+			print("Couldn't connect")
+		return client
+
+
+
+	def insert(self,attr):
+		client=self.establishConnection()
+		db = client[self.__class__.dbname]
+		coll = db[self.collection]
+		try:
+			coll.insert(attr)
+			print "insertion succesful"
+		except Exception as e:
+			print e
+
+	def loginQuery(self,empid):
+		client=self.establishConnection()
+		db = client[self.__class__.dbname]
+		collection=db[self.collection]
+		result=collection.find({"empid": empid },{"PassHash":1})
+		return result
+		
+	def query(self,queryString,Projection=None):
+		client=self.establishConnection()
+		db = client[self.__class__.dbname]
+		collection=db[self.collection]
+		result=collection.find(queryString,Projection)
+		return result

@@ -1,0 +1,194 @@
+<html>
+<head>
+<!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+<style>
+body {font-family: Arial, Helvetica, sans-serif;}
+
+#myImg {
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#myImg:hover {opacity: 0.7;}
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+}
+
+/* Modal Content (image) */
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+}
+
+/* Caption of Modal Image */
+#caption {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+    height: 150px;
+}
+
+/* Add Animation */
+.modal-content, #caption {    
+    -webkit-animation-name: zoom;
+    -webkit-animation-duration: 0.6s;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@-webkit-keyframes zoom {
+    from {-webkit-transform:scale(0)} 
+    to {-webkit-transform:scale(1)}
+}
+
+@keyframes zoom {
+    from {transform:scale(0)} 
+    to {transform:scale(1)}
+}
+
+/* The Close Button */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 100% Image Width on Smaller Screens */
+/*@media only screen and (max-width: 700px){
+    .modal-content {
+        width: 100%;
+    }
+}*/
+</style>
+</head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+   <!-- <script  src="{{url_for('static',filename='js/index.js')}}"></script> -->
+    <link href="{{url_for('static',filename='styles/form3.css')}}" rel="stylesheet" type="text/css">
+<link href="{{url_for('static',filename='styles/baseStyle.css')}}" rel="stylesheet" type="text/css">
+<body>
+ <img id="bosch-color" src="{{url_for('static',filename='images/Bosch-color.png')}}">
+<img id="logo" src="{{url_for('static',filename='images/logo_bosch.jpg')}}" style="max-width: 150px;max-height: 50px;left: 0px">
+</br>
+<div style="margin-top: 95px">
+    <h2>RGB Componenet Analysis for Component Knockoff Detection</h2>
+    <h4>Capture Reference Image</h4>
+</div>
+ <form action="/capture_ref" method="GET">
+<div style="float: left;margin-top: 42px" >
+   
+        {{form.csrf}}
+        <img id="myImg" src="{{url_for('static',filename=cap_image)}}" alt="Image" style="width:100%;max-width:400px">
+ 
+        <br> <br><button style="float:">Capture</button>
+    
+</div>
+
+<!-- <div style="margin-left: 615px; position: fixed;margin-top: 42px">
+        <img id="myImg2" src="{{url_for('static',filename=analysis_image)}}" alt="Analysis" style="width:100%;max-width:500px"> -->
+        <!-- <br> <br><BUTTON>Analyse</BUTTON> -->
+</div>
+<div style="outline-style: solid 1px Black;float: right;margin-right: 20px;">
+    <div class="form-style-2">
+<div class="form-style-2-heading">Additional information</div>
+<!-- <form action="" method="post"> -->
+<label for="DMC"><span>DMC <span class="required">*</span></span><input type="text" class="input-field" name="DMC" value="" readonly="" /></label>
+<label for="lineId"><span>Line ID <span class="required">*</span></span><input type="text" class="input-field" name="lineId" value="" /></label for="stid">
+<label><span>Station ID</span><input type="text" class="input-field" name="stid" value="" /></label>
+
+</div>
+</div>
+</form>
+
+<!-- The Modal -->
+<div id="myModal" class="modal">
+  <span class="close">&times;</span>
+  <img class="modal-content" id="img01">
+  <div id="caption"></div>
+</div>
+
+<div style="color: red; float: left;">
+<p id='camStatus'></p><button class="btn btn-default btn-smn" id='refresh_Camera' style="float: right"> Camera Status<span class="glyphicon glyphicon-refresh"></span></button>
+</div>
+
+
+
+<script>
+// Get the modal
+var modal = document.getElementById('myModal');
+
+// Get the image and insert it inside the modal - use its "alt" text as a caption
+var img = document.getElementById('myImg');
+var modalImg = document.getElementById("img01");
+var captionText = document.getElementById("caption");
+img.onclick = function(){
+    modal.style.display = "block";
+    modalImg.src = this.src;
+    captionText.innerHTML = this.alt;
+}
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() { 
+    modal.style.display = "none";
+}
+
+$("#refresh_Camera").click(function(){
+    $.ajax({
+      url:"/refresh_Camera",
+      type:'get',
+      success:function (response) {
+        $('#camStatus').html(response)
+        // body...
+      }
+    })
+}); 
+
+    $(document).ready(function(){
+$.ajax({
+      url:"/refresh_Camera",
+      type:'get',
+      success:function (response) {
+        $('#camStatus').html(response)
+        // body...
+      }
+    })
+});
+</script>
+
+</body>
+</html>
+
